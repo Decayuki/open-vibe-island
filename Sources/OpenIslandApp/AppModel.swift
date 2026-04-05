@@ -1876,7 +1876,33 @@ final class AppModel {
 
         let attachmentsChanged = state.reconcileAttachmentStates(attachmentUpdates)
         let jumpTargetsChanged = state.reconcileJumpTargets(jumpTargetUpdates)
-        guard sanitizedSessionsChanged || syntheticSessionsChanged || attachmentsChanged || jumpTargetsChanged else {
+
+        // Force-detach completed Claude sessions that have no active process.
+        // This prevents stale sessions from lingering due to grace windows or
+        // CWD-based fallback matching — matching the reference product behavior.
+        let activeClaudeSessionIDs = Set(
+            activeProcesses
+                .filter { $0.tool == .claudeCode }
+                .compactMap(\.sessionID)
+        )
+        let activeClaudeTTYs = Set(
+            activeProcesses
+                .filter { $0.tool == .claudeCode }
+                .compactMap(\.terminalTTY)
+        )
+        var forceDetachUpdates: [String: SessionAttachmentState] = [:]
+        for session in state.sessions where session.tool == .claudeCode
+            && session.phase == .completed
+            && session.attachmentState == .attached {
+            let hasMatchingProcess = activeClaudeSessionIDs.contains(session.id)
+                || session.jumpTarget?.terminalTTY.map({ activeClaudeTTYs.contains($0) }) == true
+            if !hasMatchingProcess {
+                forceDetachUpdates[session.id] = .stale
+            }
+        }
+        let forceDetachChanged = !forceDetachUpdates.isEmpty && state.reconcileAttachmentStates(forceDetachUpdates)
+
+        guard sanitizedSessionsChanged || syntheticSessionsChanged || attachmentsChanged || jumpTargetsChanged || forceDetachChanged else {
             if resolutionReport.isAuthoritative {
                 isResolvingInitialLiveSessions = false
             }
