@@ -403,7 +403,8 @@ public final class BridgeServer: @unchecked Sendable {
                         sessionID: payload.sessionID,
                         summary: "Codex wants to run: \(command)",
                         phase: .running,
-                        timestamp: .now
+                        timestamp: .now,
+                        showsNotification: true
                     )
                 )
             )
