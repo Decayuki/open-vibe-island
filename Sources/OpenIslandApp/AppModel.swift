@@ -392,7 +392,7 @@ final class AppModel {
             hooks.startClaudeUsageMonitoringIfNeeded()
             hooks.refreshCodexUsageState()
             hooks.startCodexUsageMonitoringIfNeeded()
-            updateChecker.checkIfNeeded()
+            updateChecker.startIfNeeded()
 
         } else {
             isResolvingInitialLiveSessions = false
