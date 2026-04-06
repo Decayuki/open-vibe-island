@@ -423,7 +423,8 @@ public final class BridgeServer: @unchecked Sendable {
                             summary: "Codex wants to run: \(command)",
                             phase: .running,
                             timestamp: .now,
-                            showsNotification: true
+                            showsNotification: true,
+                            requiresAttention: true
                         )
                     )
                 )

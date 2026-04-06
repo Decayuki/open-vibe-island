@@ -43,19 +43,22 @@ public struct SessionActivityUpdated: Equatable, Codable, Sendable {
     public var phase: SessionPhase
     public var timestamp: Date
     public var showsNotification: Bool
+    public var requiresAttention: Bool
 
     public init(
         sessionID: String,
         summary: String,
         phase: SessionPhase,
         timestamp: Date,
-        showsNotification: Bool = false
+        showsNotification: Bool = false,
+        requiresAttention: Bool = false
     ) {
         self.sessionID = sessionID
         self.summary = summary
         self.phase = phase
         self.timestamp = timestamp
         self.showsNotification = showsNotification
+        self.requiresAttention = requiresAttention
     }
 }
 
