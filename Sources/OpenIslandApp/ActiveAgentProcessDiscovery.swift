@@ -3,7 +3,11 @@ import OpenIslandCore
 
 struct ActiveAgentProcessDiscovery {
     private static let processCommandTimeout: TimeInterval = 0.5
-    private static let lsofCommandTimeout: TimeInterval = 0.2
+    // lsof can be slow when the process has many open file handles or the
+    // system is under load (e.g. during long Claude thinking turns with many
+    // network connections open).  0.5 s gives enough headroom without blocking
+    // the 2-second monitoring cycle for too long.
+    private static let lsofCommandTimeout: TimeInterval = 0.5
 
     private final class OutputBox: @unchecked Sendable {
         var data = Data()

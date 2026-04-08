@@ -315,8 +315,17 @@ public struct SessionState: Equatable, Sendable {
             // unavailable the SessionEnd hook can never arrive, leaving the
             // session permanently stuck as visible.  As a fallback, we also
             // check process liveness: when the agent process is confirmed dead
-            // by two consecutive polls we mark the session ended so it can be
+            // by consecutive polls we mark the session ended so it can be
             // cleaned up.
+            //
+            // Use a high threshold (30 polls ≈ 60 s) rather than the previous 2.
+            // Hook-managed sessions control their own lifecycle via SessionEnd
+            // hooks, so the fallback is only needed when the bridge is down.
+            // A low threshold caused false positives: lsof times out (0.2 s
+            // budget) when the Claude process has many open file handles during
+            // long thinking, and when the JSONL transcript is closed between
+            // writes the process snapshot returns nil — both make the session
+            // appear dead for a few polls even though the agent is running fine.
             if session.isHookManaged {
                 if session.isSessionEnded {
                     continue
@@ -326,7 +335,7 @@ public struct SessionState: Equatable, Sendable {
                     session.processNotSeenCount = 0
                 } else {
                     session.processNotSeenCount += 1
-                    if session.processNotSeenCount >= 2 {
+                    if session.processNotSeenCount >= 30 {
                         session.isSessionEnded = true
                         session.phase = .completed
                         changed.insert(id)
