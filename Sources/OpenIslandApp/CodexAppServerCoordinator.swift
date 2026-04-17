@@ -231,7 +231,8 @@ final class CodexAppServerCoordinator {
                     terminalApp: "Codex.app",
                     workspaceName: workspaceName,
                     paneTitle: title,
-                    workingDirectory: thread.cwd
+                    workingDirectory: thread.cwd,
+                    codexThreadID: thread.id
                 ),
                 codexMetadata: CodexSessionMetadata(
                     transcriptPath: thread.path,

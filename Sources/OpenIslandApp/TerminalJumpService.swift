@@ -335,6 +335,13 @@ struct TerminalJumpService {
         if let descriptor {
             switch resolvedBundleIdentifier ?? descriptor.bundleIdentifier {
             case "com.openai.codex":
+                // If we have a thread ID, use the codex:// URL scheme to
+                // open the specific conversation directly.  Otherwise just
+                // activate the app.
+                if let threadID = target.codexThreadID, !threadID.isEmpty {
+                    try openAction(["codex://threads/\(threadID)"])
+                    return "Focused the Codex.app conversation."
+                }
                 try openAction(["-b", "com.openai.codex"])
                 return "Activated Codex.app."
             case "com.googlecode.iterm2":

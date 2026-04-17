@@ -121,6 +121,10 @@ public struct JumpTarget: Equatable, Codable, Sendable {
     public var tmuxTarget: String?
     public var tmuxSocketPath: String?
     public var warpPaneUUID: String?
+    /// Codex.app thread/conversation ID.  When set and `terminalApp` is
+    /// `"Codex.app"`, the jump uses the `codex://threads/<id>` URL scheme
+    /// to open the conversation directly rather than just activating the app.
+    public var codexThreadID: String?
 
     public init(
         terminalApp: String,
@@ -131,7 +135,8 @@ public struct JumpTarget: Equatable, Codable, Sendable {
         terminalTTY: String? = nil,
         tmuxTarget: String? = nil,
         tmuxSocketPath: String? = nil,
-        warpPaneUUID: String? = nil
+        warpPaneUUID: String? = nil,
+        codexThreadID: String? = nil
     ) {
         self.terminalApp = terminalApp
         self.workspaceName = workspaceName
@@ -142,6 +147,7 @@ public struct JumpTarget: Equatable, Codable, Sendable {
         self.tmuxTarget = tmuxTarget
         self.tmuxSocketPath = tmuxSocketPath
         self.warpPaneUUID = warpPaneUUID
+        self.codexThreadID = codexThreadID
     }
 }
 

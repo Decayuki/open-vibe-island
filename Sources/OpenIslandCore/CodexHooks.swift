@@ -279,7 +279,10 @@ public extension CodexHookPayload {
             workingDirectory: cwd,
             terminalSessionID: terminalSessionID,
             terminalTTY: terminalTTY,
-            warpPaneUUID: warpPaneUUID
+            warpPaneUUID: warpPaneUUID,
+            // For Codex.app sessions, session ID is the thread ID — used
+            // for `codex://threads/<id>` deep-link jumps.
+            codexThreadID: terminalApp == "Codex.app" ? sessionID : nil
         )
     }
 
