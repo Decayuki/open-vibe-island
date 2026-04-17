@@ -144,7 +144,7 @@ struct PairingView: View {
                             }
                         }
                 } footer: {
-                    Text("Bonjour 无法发现时（如热点、AP 隔离），可手动输入 Mac 的 IP 和端口。")
+                    Text("Bonjour 无法发现时（热点、AP 隔离），可手动输入 Mac 的 IP 和端口。支持 Tailscale IP（100.x.x.x）实现跨网络连接。")
                 }
 
                 if let manualError {
