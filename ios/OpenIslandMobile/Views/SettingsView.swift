@@ -55,6 +55,11 @@ struct SettingsView: View {
                         VStack(alignment: .leading, spacing: 2) {
                             Text(macName)
                                 .font(.body)
+                            if connectionManager.isManualHost, let host = connectionManager.savedManualHostDisplay {
+                                Text("手动: \(host)")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
                             if let pairedAt = connectionManager.pairedAt {
                                 Text("配对时间: \(pairedAt, style: .date)")
                                     .font(.caption)
@@ -62,7 +67,7 @@ struct SettingsView: View {
                             }
                         }
                     } icon: {
-                        Image(systemName: "desktopcomputer")
+                        Image(systemName: connectionManager.isManualHost ? "network" : "desktopcomputer")
                             .foregroundStyle(.blue)
                     }
 

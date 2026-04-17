@@ -97,6 +97,19 @@ final class ConnectionManager: ObservableObject {
         }
     }
 
+    /// Manual host saved when user paired via IP (e.g. Tailscale). When set, auto-reconnect
+    /// skips Bonjour and connects directly. Format: "host:port".
+    private var savedManualHost: String? {
+        get { UserDefaults.standard.string(forKey: "openisland.manualHost") }
+        set { UserDefaults.standard.set(newValue, forKey: "openisland.manualHost") }
+    }
+
+    /// True when the current pairing was established via manual host entry rather than Bonjour.
+    var isManualHost: Bool { savedManualHost != nil }
+
+    /// Human-readable form of the saved manual host (e.g. "100.64.0.3:7890").
+    var savedManualHostDisplay: String? { savedManualHost }
+
     private var reconnectTask: Task<Void, Never>?
     private var discoveryObservation: Task<Void, Never>?
     private var networkMonitor: NWPathMonitor?
@@ -215,6 +228,13 @@ final class ConnectionManager: ObservableObject {
     // MARK: - Discovery
 
     func startDiscovery() {
+        // Manual host (Tailscale/custom IP) bypasses Bonjour entirely — reconnect directly.
+        if let manualHost = savedManualHost, savedToken != nil {
+            Self.logger.info("Saved manual host \(manualHost) — skipping Bonjour, reconnecting directly")
+            reconnectManualHost(manualHost)
+            return
+        }
+
         state = .discovering
         discovery.startBrowsing()
 
@@ -224,6 +244,21 @@ final class ConnectionManager: ObservableObject {
         } else {
             showPairing = true
         }
+    }
+
+    /// Reconnect to a saved manual host without going through Bonjour discovery.
+    /// Used when user originally paired via custom IP (e.g. Tailscale).
+    private func reconnectManualHost(_ hostPort: String) {
+        guard let url = URL(string: "http://\(hostPort)") else {
+            Self.logger.warning("Saved manual host \(hostPort) malformed — clearing")
+            savedManualHost = nil
+            showPairing = true
+            return
+        }
+        self.resolvedURL = url
+        self.connectedMacName = savedMacName ?? hostPort
+        self.state = .paired
+        self.connectSSE()
     }
 
     func disconnect() {
@@ -236,6 +271,7 @@ final class ConnectionManager: ObservableObject {
         discoveryObservation = nil
         savedToken = nil
         savedMacName = nil
+        savedManualHost = nil
         pairedAt = nil
         resolvedURL = nil
         connectedMacName = nil
@@ -293,6 +329,7 @@ final class ConnectionManager: ObservableObject {
             throw PairingError.resolutionFailed
         }
         self.resolvedURL = url
+        self.savedManualHost = "\(host):\(port)"
 
         var request = URLRequest(url: url.appendingPathComponent("pair"))
         request.httpMethod = "POST"
@@ -593,6 +630,7 @@ final class ConnectionManager: ObservableObject {
         reconnectTask?.cancel()
         reconnectTask = nil
         savedToken = nil
+        savedManualHost = nil
         state = .disconnected
         connectionError = "配对已过期，请重新配对"
     }
