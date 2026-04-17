@@ -522,6 +522,20 @@ public extension CodexHookPayload {
             return "Zellij"
         }
 
+        // Codex desktop app — the hook binary runs as a child of Codex.app,
+        // which sets __CFBundleIdentifier to its own bundle ID.  Must be
+        // checked BEFORE TERM_PROGRAM: when Codex.app is launched from a
+        // terminal (e.g. `open -a Codex` from Ghostty), TERM_PROGRAM leaks
+        // from the parent shell env, which would incorrectly classify
+        // Codex.app's hook subprocess as the launching terminal.
+        // __CFBundleIdentifier is safe here because a real terminal session
+        // would have its own terminal's bundle ID (e.g. com.mitchellh.ghostty),
+        // not one containing both "openai" and "codex".
+        if let bundleID = environment["__CFBundleIdentifier"]?.lowercased(),
+           bundleID.contains("openai") && bundleID.contains("codex") {
+            return "Codex.app"
+        }
+
         // TERM_PROGRAM is the only authoritative terminal signal. Each
         // terminal sets it explicitly when it execs the user's shell, so
         // unlike per-app env vars (GHOSTTY_RESOURCES_DIR,
@@ -553,16 +567,6 @@ public extension CodexHookPayload {
             default:
                 break
             }
-        }
-
-        // Codex desktop app — the hook binary runs as a child of Codex.app
-        // which sets __CFBundleIdentifier to its own bundle ID.  Consulted
-        // AFTER TERM_PROGRAM so a real terminal with a leaked
-        // __CFBundleIdentifier (shouldn't happen, but belt-and-suspenders)
-        // wins over this fallback.
-        if let bundleID = environment["__CFBundleIdentifier"]?.lowercased(),
-           bundleID.contains("openai") && bundleID.contains("codex") {
-            return "Codex.app"
         }
 
         // Fallback for terminals that don't set TERM_PROGRAM. Vulnerable to

@@ -313,16 +313,16 @@ public struct SessionState: Equatable, Sendable {
         return changed
     }
 
-    /// Re-derive `isCodexAppSession` and `isHookManaged` from the session's
-    /// current `jumpTarget.terminalApp`.  Called after any event that may
-    /// update the jumpTarget, so flags stay in sync if the terminal app
-    /// changes (e.g. the first hook fires before Codex.app is identified
-    /// and a later jumpTargetUpdated corrects it).
+    /// Upgrade `isCodexAppSession` if the session's current jumpTarget
+    /// identifies it as a Codex.app session.  Never downgrades — once a
+    /// session is classified as Codex.app, it stays classified even if a
+    /// later resolver pass replaces the jumpTarget with a generic one.
+    /// This handles the case where the first hook fires before terminalApp
+    /// is known and a later `jumpTargetUpdated` fills it in.
     static func refreshCodexAppClassification(for session: inout AgentSession) {
-        let isCodexApp = session.jumpTarget?.terminalApp == "Codex.app"
-        session.isCodexAppSession = isCodexApp
-        // Codex.app sessions use app-level liveness, not hook-managed polling.
-        if isCodexApp {
+        if session.jumpTarget?.terminalApp == "Codex.app" {
+            session.isCodexAppSession = true
+            // Codex.app sessions use app-level liveness, not hook-managed polling.
             session.isHookManaged = false
         }
     }
